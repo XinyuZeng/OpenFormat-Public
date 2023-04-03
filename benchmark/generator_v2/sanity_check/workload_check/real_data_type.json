@@ -1,0 +1,22 @@
+{
+    "classic": {
+        "string": 84,
+        "int": 32,
+        "float": 22
+    },
+    "geo": {
+        "string": 22,
+        "int": 14,
+        "float": 13
+    },
+    "log": {
+        "float": 29,
+        "string": 17,
+        "int": 3
+    },
+    "ml": {
+        "float": 55,
+        "string": 32,
+        "int": 13
+    }
+}

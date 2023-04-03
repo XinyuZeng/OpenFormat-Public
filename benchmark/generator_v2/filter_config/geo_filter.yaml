@@ -1,0 +1,6 @@
+# geo is in the middle
+filter_config:
+  - selectivity_expectation: 0.01
+    selectivity_error: 0.005
+    num_filters: 30
+    point_portion: 0.5 # range_portion = 1 - point_portion

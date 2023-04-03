@@ -1,0 +1,15 @@
+{
+	"distinct_float": false,
+
+	"depth": 62,
+
+	"row_count": 65536,
+
+	"branch_prob": 0.02,
+
+	"delete_prob": 0.01,
+
+	"use_dict": false,
+
+	"file_name": "temp"
+}

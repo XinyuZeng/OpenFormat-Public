@@ -1,0 +1,11 @@
+{
+	"depth": 62,
+
+	"row_count": 262144,
+
+	"branch_prob": 0,
+
+	"delete_prob": 0.05,
+
+	"file_name": "python/nested/experiments/depth_query_time/62"
+}

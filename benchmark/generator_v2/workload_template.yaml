@@ -1,0 +1,39 @@
+# options: core, classic, geo, log, ml
+workload: core
+row_num: 1000000
+col_num: 20
+
+# The following configs will overwrite the 
+# default configs in the predefined workload
+type_portion:
+  int: 0.27
+  float: 0.33
+  string: 0.40
+
+# suggest changing one parameter at a time
+int_config:
+  skew_pattern: gentle_zipf # options: single, binary, uniform, hotspot, gentle_zipf
+  zipf_param: 0.5
+  width: 1000
+  sortness: 0.5
+  cardinality: 0.1
+
+float_config:
+  skew_pattern: gentle_zipf 
+  zipf_param: 0.5
+  width: 1000
+  sortness: 0.5
+  cardinality: 0.1
+
+string_config:
+  skew_pattern: gentle_zipf 
+  zipf_param: 0.5
+  width: 1000
+  sortness: 0.5
+  cardinality: 0.1
+
+# We will generate 5 options around the given range
+filter_config:
+  selectivity_expectation: 0.01
+  data_type: int
+  skew_pattern: gentle_zipf

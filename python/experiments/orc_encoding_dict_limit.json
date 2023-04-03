@@ -1,0 +1,11 @@
+{
+    "compression": [
+        "UNCOMPRESSED"
+    ],
+    "compression_strategy": [
+        "speed"
+    ],
+    "dictionary_key_size_threshold": [
+        0.8
+    ]
+}

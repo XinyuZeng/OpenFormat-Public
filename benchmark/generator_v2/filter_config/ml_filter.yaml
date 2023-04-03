@@ -1,0 +1,11 @@
+filter_config:
+  - selectivity_expectation: 0.3
+    selectivity_error: 0.2
+    num_filters: 10
+    point_portion: 1 # range_portion = 1 - point_portion
+    # skew_pattern: uniform
+  - selectivity_expectation: 0.0001
+    selectivity_error: 0.00005
+    num_filters: 20
+    point_portion: 1 # range_portion = 1 - point_portion
+    # skew_pattern: uniform

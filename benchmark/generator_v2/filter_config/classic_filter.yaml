@@ -1,0 +1,12 @@
+# classic is a mix of point and range
+filter_config:
+  - selectivity_expectation: 0.3
+    selectivity_error: 0.05
+    num_filters: 10
+    point_portion: 0.1 # range_portion = 1 - point_portion
+
+  - selectivity_expectation: 0.0001
+    selectivity_error: 0.00003
+    num_filters: 20
+    point_portion: 0.8 # range_portion = 1 - point_portion
+    # skew_pattern: uniform

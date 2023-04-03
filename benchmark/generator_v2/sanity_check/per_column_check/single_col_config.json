@@ -1,0 +1,61 @@
+{
+    "basic_config": {
+        "data_type": "string",
+        "row_num": 100000,
+        "target_file_name": "title.basics_8"
+    },
+    "cnt_fea": {
+        "cardinality": 0.001729,
+        "unique_num": 1729
+    },
+    "null_fea": {
+        "null_ratio": 0.0
+    },
+    "sort_fea": {
+        "sort_window": 512,
+        "sort_score": 0.4729581147645855
+    },
+    "repeat_fea": {
+        "repeat_num_cut": [
+            0,
+            1,
+            2,
+            3,
+            5,
+            10,
+            20,
+            50,
+            100,
+            200,
+            300,
+            400,
+            512
+        ],
+        "repeat_num_ratio_list": [
+            0.8546381586858751,
+            0.0794779909236726,
+            0.0218619976430409,
+            0.016678167788103,
+            0.0120216011411085,
+            0.0075629894528857,
+            0.0049581242010112,
+            0.0016483912922018,
+            0.0007881197423995,
+            0.000201655051459,
+            4.995125127884454e-05,
+            0.0001128528269633
+        ]
+    },
+    "width_fea": {
+        "width_center": 11,
+        "width_skew": 0.526667
+    },
+    "skew_fea": {
+        "skew_pattern": "gentle_zipf",
+        "bi_skew": 0.098772,
+        "hotspot_first": 0.098772,
+        "hotspot_second": 0.083036,
+        "hotspot_third": 0.068438,
+        "zipf_skew": 0.9949128718153212
+    }
+}

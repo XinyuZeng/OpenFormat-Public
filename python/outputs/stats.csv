@@ -1,0 +1,2 @@
+compression,compression_strategy,dictionary_key_size_threshold,stripe_size,write_orc_time (s)
+UNCOMPRESSED,speed,1,2147486647,2.5042812824249268

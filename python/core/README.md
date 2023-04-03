@@ -1,0 +1,1 @@
+This repo also contains some analyzing scripts for core data pq and orc. E.g. IO trace analyze and repeat.

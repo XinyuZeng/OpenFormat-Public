@@ -1,0 +1,21 @@
+{
+    "compression": [
+        "NONE",
+        "ZSTD"
+    ],
+    "use_dictionary": [
+        true
+    ],
+    "dictionary_pagesize_limit": [
+        1048576
+    ],
+    "row_group_size": [
+        1048576
+    ],
+    "version": [
+        "2.6"
+    ],
+    "data_page_version": [
+        "2.0"
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "compression": [
+        "SNAPPY"
+    ],
+    "compression_strategy": [
+        "speed"
+    ],
+    "dictionary_key_size_threshold": [
+        0.8
+    ],
+    "bloom_filter_columns": [
+        [
+            11
+        ]
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "compression": [
+        "NONE"
+    ],
+    "use_dictionary": [
+        true
+    ],
+    "dictionary_pagesize_limit": [
+        2147483647
+    ],
+    "version": [
+        "2.6"
+    ],
+    "data_page_version": [
+        "2.0"
+    ]
+}

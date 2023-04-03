@@ -1,0 +1,44 @@
+filter_config:
+  - selectivity_expectation: 0.3
+    selectivity_error: 0.05
+    num_filters: 10
+    point_portion: 0.1 # range_portion = 1 - point_portion
+  - selectivity_expectation: 0.1
+    selectivity_error: 0.01
+    num_filters: 10
+    point_portion: 0.5 # range_portion = 1 - point_portion
+
+  - selectivity_expectation: 0.01
+    selectivity_error: 0.001
+    num_filters: 10
+    point_portion: 1 # range_portion = 1 - point_portion
+  
+  - selectivity_expectation: 0.001
+    selectivity_error: 0.0001
+    num_filters: 10
+    point_portion: 1 # range_portion = 1 - point_portion
+    data_type: int
+
+  - selectivity_expectation: 0.0001
+    selectivity_error: 0.00001
+    num_filters: 10
+    point_portion: 1 # range_portion = 1 - point_portion
+    data_type: float
+  
+  - selectivity_expectation: 0.00001
+    selectivity_error: 0.000001
+    num_filters: 10
+    point_portion: 1 # range_portion = 1 - point_portion
+
+  - selectivity_expectation: 0.000001
+    selectivity_error: 0.0000001
+    num_filters: 10
+    point_portion: 1 # range_portion = 1 - point_portion
+    skew_pattern: gentle_zipf
+
+  # - selectivity_expectation: 0.0000005
+  #   selectivity_error: 0.0000002
+  #   num_filters: 10
+  #   point_portion: 1 # range_portion = 1 - point_portion
+  #   # optional fields:
+  #   skew_pattern: gentle_zipf
