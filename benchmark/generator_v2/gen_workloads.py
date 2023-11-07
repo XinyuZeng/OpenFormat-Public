@@ -1,15 +1,14 @@
 from cmath import isnan, nan
-from math import sqrt
-import datetime
 import random
 import pandas as pd
 import numpy as np
 import json
 import os
 import sys
-import traceback
 from generator import *
 import logging
+import argparse
+import multiprocessing as mp
 
 LOG = logging.getLogger(__name__)
 LOG_handler = logging.StreamHandler()
@@ -31,6 +30,8 @@ _WIDTH_CENTER_SLOT_CAR_DICTS, _WIDTH_SKEW_SLOT_DICT = [], {}
 _SORT_LEVELS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.01]
 _CAR_LEVELS = [0, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.01]
 
+RAND_SEED = 53
+MP_POOL = None
 
 def init_one_slot(col_num, interval_list, prob):
     res_dict = {}
@@ -222,7 +223,7 @@ def get_config_per_col(global_dict):
     return res
 
 
-def rewrite_config(DATA_TYPE, ROW_NUM, output_file):
+def rewrite_config(DATA_TYPE, ROW_NUM, output_file=None):
 
     # null config
     NULL_RATIO = get_config_per_col(_NULL_RATIO_SLOT_DICT)
@@ -352,16 +353,17 @@ def rewrite_config(DATA_TYPE, ROW_NUM, output_file):
     }
 
     # write to json output_config_file
-    with open(output_file, 'w') as f:
-        json.dump(all_config, f, indent=4)
+    if output_file is not None:
+        with open(output_file, 'w') as f:
+            json.dump(all_config, f, indent=4)
 
     return all_config
 
 
-def gen_schema(tar_dir, fea_dict, TARGET_BASEFILE_NAME):
-    f = open(os.path.join(tar_dir, f'{TARGET_BASEFILE_NAME}_arrow_schema.txt'), "w")
+def gen_schema(col_num, tar_dir, fea_dict, base_name):
+    f = open(os.path.join(tar_dir, f'{base_name}_arrow_schema.txt'), "w")
     f.write("message schema {\n")
-    for i in range(COL_NUM):
+    for i in range(col_num):
         if fea_dict[f'col{i}']['basic_config']['data_type'] == 'int':
             f.write(f"  optional int64 col{i};\n")
         elif fea_dict[f'col{i}']['basic_config']['data_type'] == 'float':
@@ -372,9 +374,9 @@ def gen_schema(tar_dir, fea_dict, TARGET_BASEFILE_NAME):
             assert False
     f.write("}")
     f.close()
-    f = open(os.path.join(tar_dir, f'{TARGET_BASEFILE_NAME}_orc_schema.txt'), "w")
+    f = open(os.path.join(tar_dir, f'{base_name}_orc_schema.txt'), "w")
     f.write("struct<")
-    for i in range(COL_NUM):
+    for i in range(col_num):
         if fea_dict[f'col{i}']['basic_config']['data_type'] == 'int':
             f.write(f"f{i}:bigint")
         elif fea_dict[f'col{i}']['basic_config']['data_type'] == 'float':
@@ -383,13 +385,35 @@ def gen_schema(tar_dir, fea_dict, TARGET_BASEFILE_NAME):
             f.write(f"f{i}:string")
         else:
             assert False
-        if i != COL_NUM - 1:
+        if i != col_num - 1:
             f.write(",")
     f.write(">")
     f.close()
+    
+def process_col(js_reader, DATA_TYPE, seed_list, col_idx ):
+    # import generator to get data
+    generator = Generator(js_reader, seed=seed_list[col_idx])
+    res_data_list = generator.gen_data()
+    # write to file
+    # Attention!! If there is any null data in int column, pandas will convert the column to float
+    res_df = pd.DataFrame(res_data_list)
+    if DATA_TYPE == 'string':
+        res_df = res_df.replace({'null': np.nan})
+    # FIXME: randomly generate all null values in float (UNIQUE_NUM=0)
+    if DATA_TYPE == 'int':
+        res_df = res_df.astype('Int64')
+    if res_df.isnull().values.all():
+        if DATA_TYPE == 'string':
+            res_df.iloc[0] = 'a'
+        elif DATA_TYPE == 'int':
+            res_df.iloc[0] = 1
+        else:
+            res_df.iloc[0] = 1.0
+    # LOG.info(f"Finish col_idx: {col_idx}, DATA_TYPE: {DATA_TYPE}")
+    return res_df
 
 # CAUTION: fea_type only works after assign single_type
-def gen_core_data(ROW_NUM, COL_NUM, TARGET_BASEFILE_NAME, single_type=None, fea_type=None, fea_param=None):
+def gen_core_data(row_num, col_num, base_name, single_type=None, fea_type=None, fea_param=None):
     core_config_dict = {
         "int": json.load(open("./workload_config/core_config/core_int64.json", 'r')),
         "float": json.load(open("./workload_config/core_config/core_float64.json", 'r')),
@@ -450,73 +474,60 @@ def gen_core_data(ROW_NUM, COL_NUM, TARGET_BASEFILE_NAME, single_type=None, fea_
             core_config_dict[single_type][key]['width_center'] = [fea_param * 0.99, fea_param]
             for i in range(9):
                 core_config_dict[single_type][key][f'width_center_car{i}_prob'] = [1]
-        else:
-            assert False
+        # else:
+        #     assert False
     data_type_slot_dict = {'int': 0, 'float': 0, 'string': 0}
-    for col_idx in range(COL_NUM):
+    for col_idx in range(col_num):
         for i in range(len(dtype_normalized_prob)):
-            if col_idx < COL_NUM * sum(dtype_normalized_prob[:i + 1]):
+            if col_idx < col_num * sum(dtype_normalized_prob[:i + 1]):
                 tmp_data_type = list(dtype_dict.keys())[i]
                 data_type_slot_dict[tmp_data_type] += 1
                 break
     # generate the data
     df_list = []
-    os.system(f"rm -rf ./{TARGET_BASEFILE_NAME}/configs/core")
-    os.system(f"mkdir -p ./{TARGET_BASEFILE_NAME}/configs/core")
+    os.system(f"rm -rf ./{base_name}/configs/core")
+    os.system(f"mkdir -p ./{base_name}/configs/core")
     global_idx = 0
     table_config = {}
     seed_list = []
-    random.seed(53)  # hardcode a list
-    for i in range(COL_NUM):
+    random.seed(RAND_SEED)  # hardcode a list
+    for i in range(col_num):
         seed_list.append(random.randint(0, 1000000))
-    random.seed(53)  # hardcode a list
+    random.seed(RAND_SEED)  # hardcode a list
     for DATA_TYPE in data_type_slot_dict.keys():
         col_num_per_dtype = data_type_slot_dict[DATA_TYPE]
         LOG.info("Start core_workload, data_type: {}, col_num: {}".format(DATA_TYPE, col_num_per_dtype))
         init_all_slot(col_num_per_dtype, js_reader=core_config_dict[DATA_TYPE])
+        col_config_list = []
         for col_idx in range(col_num_per_dtype):
-            output_config_file = f'./{TARGET_BASEFILE_NAME}/configs/core/{DATA_TYPE}_{col_idx}.json'
-            col_config = rewrite_config(DATA_TYPE, ROW_NUM, output_config_file)
-            table_config[f'col{global_idx}'] = col_config
-            global_idx += 1
-            # import generator to get data
-            generator = Generator(output_config_file, seed=seed_list[col_idx])
-            res_data_list = generator.gen_data()
-            # write to file
-            # Attention!! If there is any null data in int column, pandas will convert the column to float
-            res_df = pd.DataFrame(res_data_list)
-            if DATA_TYPE == 'string':
-                res_df = res_df.replace({'null': np.nan})
-            # FIXME: randomly generate all null values in float (UNIQUE_NUM=0)
-            if DATA_TYPE == 'int':
-                res_df = res_df.astype('Int64')
-            if res_df.isnull().values.all():
-                if DATA_TYPE == 'string':
-                    res_df.iloc[0] = 'a'
-                elif DATA_TYPE == 'int':
-                    res_df.iloc[0] = 1
-                else:
-                    res_df.iloc[0] = 1.0
+            output_config_file = f'./{base_name}/configs/core/{DATA_TYPE}_{col_idx}.json'
+            col_config_list.append(rewrite_config(DATA_TYPE, row_num, output_config_file))
+        tasks = [(col_config, DATA_TYPE, seed_list, col_idx) for (col_config, col_idx) in zip(col_config_list, range(col_num_per_dtype))]
+        results = MP_POOL.starmap_async(process_col, tasks).get()
+
+        # update shared variables
+        for col_idx, (col_config, res_df) in enumerate(zip(col_config_list, results)):
+            table_config[f'col{global_idx + col_idx}'] = col_config
             df_list.append(res_df)
-            LOG.info(f"Finish col_idx: {col_idx}, DATA_TYPE: {DATA_TYPE}")
-    with open(f'./{TARGET_BASEFILE_NAME}/configs/table_config.json', 'w') as f:
+        global_idx += col_num_per_dtype
+    with open(f'./{base_name}/configs/table_config.json', 'w') as f:
         json.dump(table_config, f, indent=4)
     res_df = pd.concat(df_list, axis=1)
-    tar_dir = f"./{TARGET_BASEFILE_NAME}/gen_data"
+    tar_dir = f"./{base_name}/gen_data"
     os.makedirs(tar_dir, exist_ok=True)
-    gen_schema(tar_dir, table_config, TARGET_BASEFILE_NAME)
-    res_df.to_csv(os.path.join(tar_dir, f'{TARGET_BASEFILE_NAME}.csv'), header=False, index=False)
+    gen_schema(col_num, tar_dir, table_config, base_name)
+    res_df.to_csv(os.path.join(tar_dir, f'{base_name}.csv'), header=['col%d' % index for index in range(len(res_df.columns))], index=False)
     print("Finish core dataset! 🎉🎉🎉🎉🎉🎉")
 
 
-def gen_multi_data(ROW_NUM, COL_NUM, TARGET_BASEFILE_NAME, WORKLOAD):
-    if WORKLOAD not in ['geo', 'classic', 'log', 'ml', 'bi', 'multiple']:
-        LOG.error("wrong workload tag:", WORKLOAD)
+def gen_multi_data(row_num, col_num, base_name, workload):
+    if workload not in ['geo', 'classic', 'log', 'ml', 'bi', 'multiple', 'vector']:
+        LOG.error("wrong workload tag:", workload)
         exit(1)
-    if WORKLOAD == 'multiple':
+    if workload == 'multiple':
         workload_lists = ['geo', 'classic', 'log', 'ml', 'bi']
     else:
-        workload_lists = [WORKLOAD]
+        workload_lists = [workload]
     # workload_lists = ['classic']
     data_type_proportion = {
         'classic': {
@@ -543,6 +554,10 @@ def gen_multi_data(ROW_NUM, COL_NUM, TARGET_BASEFILE_NAME, WORKLOAD):
             'int': 1150,
             'float': 494,
             'string': 858
+        },
+        'vector': {
+            'int': 1,
+            'float': 9
         }
     }
 
@@ -551,12 +566,6 @@ def gen_multi_data(ROW_NUM, COL_NUM, TARGET_BASEFILE_NAME, WORKLOAD):
         print("ATTENTION!! The generator is in sanity check mode!")
 
     for workload in workload_lists:
-        workload_config_dict = {
-            "int": json.load(open("./workload_config/{}_config/{}_int64.json".format(workload, workload), 'r')),
-            "float": json.load(open("./workload_config/{}_config/{}_float64.json".format(workload, workload), 'r')),
-            "string": json.load(open("./workload_config/{}_config/{}_object.json".format(workload, workload), 'r'))
-        }
-
         data_type_slot_dict = {'int': 0, 'float': 0, 'string': 0}
         # get the data type status of the current workload
         if SANITY_CHECK:
@@ -564,92 +573,100 @@ def gen_multi_data(ROW_NUM, COL_NUM, TARGET_BASEFILE_NAME, WORKLOAD):
             with open('./sanity_check/workload_check/real_data_type.json', 'r') as f:
                 real_data_type = json.load(f)
             dtype_dict = real_data_type[workload]
-            COL_NUM = sum(dtype_dict.values())
+            col_num = sum(dtype_dict.values())
             data_type_slot_dict = dtype_dict  # just use the same dtype_dict
         else:
             dtype_dict = data_type_proportion[workload]
             dtype_normalized_prob = [dtype_dict[key] / sum(dtype_dict.values()) for key in dtype_dict]
             # assign the data type to columns according to the propotion
-            for col_idx in range(COL_NUM):
+            for col_idx in range(col_num):
                 for i in range(len(dtype_normalized_prob)):
-                    if col_idx < COL_NUM * sum(dtype_normalized_prob[:i + 1]):
+                    if col_idx < col_num * sum(dtype_normalized_prob[:i + 1]):
                         tmp_data_type = list(dtype_dict.keys())[i]
                         data_type_slot_dict[tmp_data_type] += 1
                         break
 
+        workload_config_dict = {
+            "int": json.load(open("./workload_config/{}_config/{}_int64.json".format(workload, workload), 'r')) if 'int' in dtype_dict else None,
+            "float": json.load(open("./workload_config/{}_config/{}_float64.json".format(workload, workload), 'r')) if 'float' in dtype_dict else None,
+            "string": json.load(open("./workload_config/{}_config/{}_object.json".format(workload, workload), 'r')) if 'string' in dtype_dict else None
+        }
+        keys_to_delete = [key for key, value in workload_config_dict.items() if value is None]
+        for key in keys_to_delete:
+            del workload_config_dict[key]
+            del data_type_slot_dict[key]
+
         # generate the data
         df_list = []
-        os.system(f"rm -rf ./{TARGET_BASEFILE_NAME}/configs/{workload}")
-        os.system(f"mkdir -p ./{TARGET_BASEFILE_NAME}/configs/{workload}")
+        os.system(f"rm -rf ./{base_name}/configs/{workload}")
+        os.system(f"mkdir -p ./{base_name}/configs/{workload}")
         global_idx = 0
         table_config = {}
         seed_list = []
-        random.seed(53)  # hardcode a list
-        for i in range(COL_NUM):
+        random.seed(RAND_SEED)  # hardcode a list
+        for i in range(col_num):
             seed_list.append(random.randint(0, 1000000))
-        random.seed(53)  # hardcode a list
+        random.seed(RAND_SEED)  # hardcode a list
         for DATA_TYPE in data_type_slot_dict.keys():
             col_num_per_dtype = data_type_slot_dict[DATA_TYPE]
             LOG.info("Start workload: {}, data_type: {}, col_num: {}".format(workload, DATA_TYPE, col_num_per_dtype))
             init_all_slot(col_num_per_dtype, js_reader=workload_config_dict[DATA_TYPE])
+            col_config_list = []
             for col_idx in range(col_num_per_dtype):
-                output_config_file = f'./{TARGET_BASEFILE_NAME}/configs/{workload}/{DATA_TYPE}_{col_idx}.json'
-                col_config = rewrite_config(DATA_TYPE, ROW_NUM, output_config_file)
-                table_config[f'col{global_idx}'] = col_config
-                global_idx += 1
-                # import generator to get data
-                generator = Generator(output_config_file, seed=seed_list[col_idx])
-                res_data_list = generator.gen_data()
-                # write to file
-                # Attention!! If there is any null data in int column, pandas will convert the column to float
-                res_df = pd.DataFrame(res_data_list)
-                if DATA_TYPE == 'string':
-                    res_df = res_df.replace({'null': np.nan})
-                if DATA_TYPE == 'int':
-                    res_df = res_df.astype('Int64')
-                if res_df.isnull().values.all():
-                    if DATA_TYPE == 'string':
-                        res_df.iloc[0] = 'a'
-                    elif DATA_TYPE == 'int':
-                        res_df.iloc[0] = 1
-                    else:
-                        res_df.iloc[0] = 1.0
+                output_config_file = f'./{base_name}/configs/core/{DATA_TYPE}_{col_idx}.json'
+                col_config_list.append(rewrite_config(DATA_TYPE, row_num, output_config_file))
+            tasks = [(col_config, DATA_TYPE, seed_list, col_idx) for (col_config, col_idx) in zip(col_config_list, range(col_num_per_dtype))]
+            results = MP_POOL.starmap_async(process_col, tasks).get()
+
+            # update shared variables
+            for col_idx, (col_config, res_df) in enumerate(zip(col_config_list, results)):
+                table_config[f'col{global_idx + col_idx}'] = col_config
                 df_list.append(res_df)
-                LOG.info(f"Finish col_idx: {col_idx}, DATA_TYPE: {DATA_TYPE}")
+            global_idx += col_num_per_dtype
         # write the table config to file
-        with open(f'./{TARGET_BASEFILE_NAME}/configs/table_config.json', 'w') as f:
+        with open(f'./{base_name}/configs/table_config.json', 'w') as f:
             json.dump(table_config, f, indent=4)
         res_df = pd.concat(df_list, axis=1)
-        tar_dir = f"./{TARGET_BASEFILE_NAME}/gen_data"
+        tar_dir = f"./{base_name}/gen_data"
         os.makedirs(tar_dir, exist_ok=True)
-        gen_schema(tar_dir, table_config, TARGET_BASEFILE_NAME)
-        res_df.to_csv(os.path.join(tar_dir, f'{TARGET_BASEFILE_NAME}.csv'), header=False, index=False)
+        gen_schema(col_num, tar_dir, table_config, base_name)
+        res_df.to_csv(os.path.join(tar_dir, f'{base_name}.csv'), header=['col%d' % index for index in range(len(res_df.columns))], index=False)
         print("Finish workload: {}! 🎉🎉🎉🎉🎉🎉".format(workload))
 
 
 if __name__ == '__main__':
-    # receive args from command line
-    if len(sys.argv) != 5 and len(sys.argv) != 7:
-        print("Usage: python3 gen_workloads.py <workload> <row_num> <col_num> <target_basefile_name>")
-        exit(1)
-    WORKLOAD = str(sys.argv[1])  # core or multiple or classic, geo, log, ml
-    ROW_NUM = int(sys.argv[2])
-    COL_NUM = int(sys.argv[3])
+    parser = argparse.ArgumentParser(
+                    prog='python3 gen_workloads.py',
+                    description='Generate target workload data and config files')
+    parser.add_argument('workload', type=str, help='selection from [core, multiple, classic, geo, log, ml, bi]')
+    parser.add_argument('row_num', type=int)           
+    parser.add_argument('col_num', type=int)           
+    parser.add_argument('base_name', type=str, help='The base directory name of the generated data')           
+    parser.add_argument('fea_type', type=str, nargs='?', default=None, help='Optional. Only use on core workload, select from [sort, car, zipf, width]')           
+    parser.add_argument('fea_param', type=float, nargs='?', default=None, help='Optional. Refer to the paper for the value selection')           
+    parser.add_argument('--random_seed', action='store_true', help='Use a random seed instead of pre-defined one.')
+    parser.add_argument('--multi_process', action='store_true', help='Multi processes mode enabled to make generating faster.')
+
+    args = parser.parse_args()
+    workload = args.workload  
+    row_num = args.row_num
+    col_num = args.col_num
     # No need to set data_type here, which just follows the proportion of each workload
-    TARGET_BASEFILE_NAME = str(sys.argv[4])
-    if len(sys.argv) >= 7:
-        fea_type = str(sys.argv[5])
-        fea_param = float(sys.argv[6])
+    base_name = args.base_name
+    if args.random_seed:
+        RAND_SEED = random.randint(0, 1000000)
+    if args.multi_process:
+        MP_POOL = mp.Pool(mp.cpu_count())
     else:
-        fea_type = None
-        fea_param = None
+        MP_POOL = mp.Pool(1)
+    
     # change the dir of the current file
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    if WORKLOAD == "core":
-        gen_core_data(ROW_NUM, COL_NUM, TARGET_BASEFILE_NAME)
-    elif WORKLOAD in ['int', 'float', 'string']:
-        gen_core_data(ROW_NUM, COL_NUM, TARGET_BASEFILE_NAME, WORKLOAD, fea_type, fea_param)
+    if workload == "core":
+        gen_core_data(row_num, col_num, base_name)
+    elif workload in ['int', 'float', 'string']:
+        gen_core_data(row_num, col_num, base_name, workload, args.fea_type, args.fea_param)
     else:
-        gen_multi_data(ROW_NUM, COL_NUM, TARGET_BASEFILE_NAME, WORKLOAD)
+        gen_multi_data(row_num, col_num, base_name, workload)
     print("Generating Done!!")

@@ -1,0 +1,14 @@
+./run.sh row_count
+./run.sh row_count_cached
+./run.sh depth
+./run.sh depth_cached
+./run.sh depth_shallow
+./run.sh depth_shallow_cached
+./run.sh rle_prob
+./run.sh rle_prob_cached
+./run.sh core_int
+./run.sh core_int_cached
+./run.sh core_float
+./run.sh core_float_cached
+./run.sh core_string
+./run.sh core_string_cached

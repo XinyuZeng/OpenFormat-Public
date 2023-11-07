@@ -1,0 +1,1 @@
+compress_zstd_32K.orc cudf false

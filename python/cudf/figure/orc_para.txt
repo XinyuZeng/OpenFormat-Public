@@ -1,0 +1,2 @@
+orc * stripe_size throughput _ orc_para_stripe_|orc_para_default
+orc * row_index_stride throughput _ orc_para_row_index_|orc_para_default

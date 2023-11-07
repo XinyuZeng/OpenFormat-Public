@@ -11,7 +11,7 @@ import sys
 
 
 class Generator(object):
-    def __init__(self, config_file, seed=None) -> None:
+    def __init__(self, js_reader, seed=None) -> None:
         """ read the config file and set the parameters """
         if seed != None:
             self.myrandom = Random(seed)
@@ -20,8 +20,8 @@ class Generator(object):
             self.myrandom = Random()
             self.nprandom = np.random.RandomState()
 
-        with open(config_file, "r") as f:
-            js_reader = json.load(f)
+        # with open(config_file, "r") as f:
+        #     js_reader = json.load(f)
 
         # basic config
         basic_config = js_reader["basic_config"]

@@ -1,0 +1,13 @@
+core_string_4K default false
+core_string_8K default false
+core_string_12K default false
+core_string_16K default false
+core_string_32K default false
+core_string_64K default false
+core_string_128K default false
+core_string_256K default false
+core_string_512K default false
+core_string_1M default false
+core_string_2M default false
+core_string_4M default false
+core_string_8M default false

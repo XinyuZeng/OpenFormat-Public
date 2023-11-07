@@ -65,7 +65,10 @@ def collect_results():
     filename = "outputs/stats.json"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     f = open(filename)
-    for line in f:
-        data.append(json.loads(line.strip()))
+    for i, line in enumerate(f):
+        try:
+            data.append(json.loads(line.strip()))
+        except json.decoder.JSONDecodeError:
+            print("line {} is not a valid json string".format(i))
     df = pd.DataFrame(data=data)
     df.to_csv("outputs/stats.csv", index=False)

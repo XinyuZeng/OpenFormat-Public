@@ -1,0 +1,8 @@
+depth_shallow_1.orc default false
+depth_shallow_2.orc default false
+depth_shallow_3.orc default false
+depth_shallow_4.orc default false
+depth_shallow_5.orc default false
+depth_shallow_6.orc default false
+depth_shallow_8.orc default false
+depth_shallow_10.orc default false

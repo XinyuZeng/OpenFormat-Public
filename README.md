@@ -7,12 +7,15 @@ To run the experiments, you need to make sure all the repos are in the same home
 
 ```
 /home/user/
-    \____ OpenFormat 
-           \____ benchmark (real-world data analysis and benchmark generator)
-           \____ python (experiment automation scripts and plotting)
-    \____ arrow-Public (including executables and profiling utilities for testing Parquet's scan performance, and also nested overhead for Parquet and ORC to Arrow)
-    \____ orc (including executables and profiling utilities for testing ORC's scan and select performance)
-    \____ arrow-rs (including executables for testing Parquet's select performance)
+    \__ OpenFormat 
+           \__ benchmark (real-world data analysis and benchmark generator)
+              \__ generator_v2 
+                 \__ README.md (detailed instructions for the benchmark generator)
+           \__ python (experiment automation scripts and plotting)
+           \__ vector_data: embeddings cr and performance
+    \__ arrow-Public (including executables and profiling utilities for testing Parquet's scan performance, and also nested overhead for Parquet and ORC to Arrow)
+    \__ orc (including executables and profiling utilities for testing ORC's scan and select performance)
+    \__ arrow-rs (including executables for testing Parquet's select performance)
 ```
 
 You need to follow each repo's build instructions to install the dependencies of arrow, orc, and arrow-rs, and then build each repo in release mode.

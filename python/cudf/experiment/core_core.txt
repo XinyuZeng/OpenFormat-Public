@@ -1,0 +1,13 @@
+core_core_4K default true
+core_core_8K default true
+core_core_12K default true
+core_core_16K default true
+core_core_32K default true
+core_core_64K default true
+core_core_128K default true
+core_core_256K default true
+core_core_512K default true
+core_core_1M default true
+core_core_2M default true
+core_core_4M default true
+core_core_8M default true

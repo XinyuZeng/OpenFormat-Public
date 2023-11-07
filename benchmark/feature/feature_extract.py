@@ -11,65 +11,56 @@ import datetime
 
 
 def calc_cardinality(df, stats):
-    begin_time = time.time()
     stats['nrows'] = len(df)
     df = df[~df.isnull()]
     res = len(df.unique()) / len(df) if len(df) != 0 else 0
     stats['cardinality'] = res
-    # stats['cardinality_time'] = time.time() - begin_time
     return 1
 
 
 def calc_null_ratio(df, stats):
-    begin_time = time.time()
     # if df.dtypes == 'int64':
     #     res = (df == 0).sum() / len(df)
     # elif df.dtypes == 'bool':
     #     res = (df == False).sum() / len(df)
     res = df.isnull().sum() / len(df)
     stats['null_ratio'] = res
-    # stats['null_ratio_time'] = time.time() - begin_time
     return 1
 
 
 def value_width(df, stats):
-    begin_time = time.time()
     df = df[~df.isnull()]
     if len(df) == 0:
         df = pd.Series([0])
-    # if int
-    try:
-        if df.dtypes == 'Int64':
-            mean_val = df.mean()
-            max_val = df.max()
-            median_val = df.median()
-            min_val = df.min()
-    except:
-        if df.dtypes == 'int64':  # store as int64 in pandas
-            mean_val = df.mean()
-            max_val = df.max()
-            median_val = df.median()
-            min_val = df.min()
-        elif df.dtypes == 'object':  # store as binary in parquet
-            # print('df_content:{}'.format(df[:5]))
-            len_df = df.astype(str).str.len()
-            # print('len_df_content:{}'.format(len_df[:5]))
-            mean_val = len_df.mean()
-            max_val = len_df.max()
-            median_val = len_df.median()
-            min_val = len_df.min()
-        elif df.dtypes == 'float64':  # store as double in parquet
-            mean_val = 8
-            max_val = 8
-            median_val = 8
-            min_val = 8
-        elif df.dtypes == 'bool':
-            mean_val = 0.125
-            max_val = 0.125
-            median_val = 0.125
-            min_val = 0.125
-        else:
-            print("unknown type: {}".format(df.dtypes))
+    if df.dtypes == 'Int64':
+        mean_val = df.mean()
+        max_val = df.max()
+        median_val = df.median()
+        min_val = df.min()
+    elif df.dtypes == 'int64':  # store as int64 in pandas
+        mean_val = df.mean()
+        max_val = df.max()
+        median_val = df.median()
+        min_val = df.min()
+    elif df.dtypes == 'object':  # store as binary in parquet
+        len_df = df.astype(str).str.len()
+        mean_val = len_df.mean()
+        max_val = len_df.max()
+        median_val = len_df.median()
+        min_val = len_df.min()
+    elif df.dtypes == 'float64':  # store as double in parquet
+        mean_val = 8
+        max_val = 8
+        median_val = 8
+        min_val = 8
+    elif df.dtypes == 'bool':
+        mean_val = 0.125
+        max_val = 0.125
+        median_val = 0.125
+        min_val = 0.125
+    else:
+        print("unknown type: {}".format(df.dtypes))
+    print(df.dtypes)
     stats['width_mean'] = float(mean_val)
     stats['width_min'] = float(min_val)
     stats['width_max'] = float(max_val)
@@ -196,15 +187,6 @@ def cal_value_zipf(df, stats):
     stats['zipf'] = popt[0]
     stats['zipf_r2'] = r_squared
 
-    # fig = plt.figure(figsize=(8, 6))
-    # plt.plot(xdata1, ydata, 'bo-', markersize='5', label='data')
-    # plt.plot(xdata1, zipf_func((xdata1, xdata2), *popt), 'r-',
-    #          label='zipf_a=%5.3f, zipf_b=%5.3f, r^2=%6.5f' % (popt[0], popt[1], r_squared))
-    # plt.legend()
-    # plt.show()
-    # fig.savefig(
-    #     './figs/value_zipf/{}_{}.svg'.format(stats['file_name'], stats['col_idx']))
-    # plt.close()
     return 1
 
 
@@ -213,21 +195,19 @@ def cal_width_distribution(df, stats):
     df = df[~df.isnull()]
     if len(df) == 0:
         df = pd.Series([0, 0, 0])
-    try:
-        if df.dtypes == 'Int64':
-            width_df = pd.cut(df, [-1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 100000000000])
-            hist_df = width_df.value_counts(normalize=True, sort=True)
-    except:
-        if df.dtypes == 'int64':
-            # have a upper bound of 1e11
-            width_df = pd.cut(df, [-1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 100000000000])
-            hist_df = width_df.value_counts(normalize=True, sort=True)
-        elif df.dtypes == 'object':
-            len_df = df.astype(str).str.len()
-            width_df = pd.cut(len_df, [0, 5, 10, 25, 50, 100, 250, 500, 1000])
-            hist_df = width_df.value_counts(normalize=True, sort=True)
-        else:
-            hist_df = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 0])
+    if df.dtypes == 'Int64':
+        width_df = pd.cut(df, [-1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 100000000000])
+        hist_df = width_df.value_counts(normalize=True, sort=True)
+    elif df.dtypes == 'int64':
+        # have a upper bound of 1e11
+        width_df = pd.cut(df, [-1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 100000000000])
+        hist_df = width_df.value_counts(normalize=True, sort=True)
+    elif df.dtypes == 'object':
+        len_df = df.astype(str).str.len()
+        width_df = pd.cut(len_df, [0, 5, 10, 25, 50, 100, 250, 500, 1000])
+        hist_df = width_df.value_counts(normalize=True, sort=True)
+    else:
+        hist_df = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 0])
     for i in range(3):
         stats['width_most_repeated_{}'.format(i)] = float(hist_df.values[i])
     if isnan(stats['width_most_repeated_{}'.format(0)]):
@@ -264,23 +244,26 @@ def cal_repetead_block(df, stats):
 
 
 if __name__ == '__main__':
-    # print("ERROR: You are not supposed to run this program unless you have prepared the datasets.")
-    # exit(1)
-    root_dir = '/root/data'
+    root_dir = '/mnt/data'
     dir_lists = os.listdir(root_dir)
     for dir in dir_lists:
         dir_name = os.path.join(root_dir, dir)
+        if not os.path.isdir(dir_name):
+            continue
         file_lists = os.listdir(dir_name)
         print(file_lists)
+        # ['github-embeddings-doy.csv', 'cohere-en.csv', 'llm-book.csv', 'cm4-10k-repeat.csv', 'tollefj.csv', 'cohere-simple.csv', 'cm4-10k-unique.csv', 'laion.csv', 'general-pmd.csv']
+        # for base_file_name in ['cm4-10k-unique.csv', 'laion.csv', 'general-pmd.csv']:
         for base_file_name in file_lists[::]:
             csv_file_name = os.path.join(dir_name, base_file_name)
-            if dir in ['edgar', 'ml', 'yelp', 'flight', 'cells', 'menu', 'mgbench', "UKPP"]:
+            if dir in ['edgar', 'ml', 'yelp', 'flight', 'cells', 'menu', 'mgbench', "UKPP", 'vector']:
                 df = pd.read_csv(csv_file_name, sep=',', header=None, skiprows=1, on_bad_lines='warn', low_memory=False)
             elif dir in ['imdb', 'geo']:
                 df = pd.read_csv(csv_file_name, sep='\t', header=None, skiprows=1, on_bad_lines='warn', low_memory=False)
             elif dir in ['cwi']:
                 df = pd.read_csv(csv_file_name, sep='|', header=None, skiprows=1, on_bad_lines='warn', low_memory=False)
-
+            else:
+                assert False, "Unknown dataset: {}".format(dir)
             col_num = len(df.columns)
             print("col_num: ", col_num)
             for col_idx in range(0, col_num):

@@ -1,3 +1,0 @@
-read orc(s): 0.107422
-Rows: 999999
-Batches: 977

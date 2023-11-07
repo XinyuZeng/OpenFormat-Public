@@ -1,0 +1,16 @@
+pq/
+orc/
+nsight/
+result/
+setting/
+figure/*.png
+figure_profile/*.png
+temp/
+log/
+temp_*/
+temp_*
+ncu/
+ncu_report/
+ncu_csv/
+ncu_stats/
+experiment/_*

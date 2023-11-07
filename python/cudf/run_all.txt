@@ -1,0 +1,3 @@
+generate_all.sh
+main_all.sh
+draw_all.sh

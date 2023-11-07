@@ -1,0 +1,13 @@
+search_cudf_4K cudf true
+search_cudf_8K cudf true
+search_cudf_12K cudf true
+search_cudf_16K cudf true
+search_cudf_32K cudf true
+search_cudf_64K cudf true
+search_cudf_128K cudf true
+search_cudf_256K cudf true
+search_cudf_512K cudf true
+search_cudf_1M cudf true
+search_cudf_2M cudf true
+search_cudf_4M cudf true
+search_cudf_8M cudf true

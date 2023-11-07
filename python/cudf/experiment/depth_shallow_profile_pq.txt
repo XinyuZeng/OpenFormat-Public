@@ -1,0 +1,8 @@
+depth_shallow_1.pq default false
+depth_shallow_2.pq default false
+depth_shallow_3.pq default false
+depth_shallow_4.pq default false
+depth_shallow_5.pq default false
+depth_shallow_6.pq default false
+depth_shallow_8.pq default false
+depth_shallow_10.pq default false

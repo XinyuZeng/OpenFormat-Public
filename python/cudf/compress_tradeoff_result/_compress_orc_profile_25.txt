@@ -1,0 +1,1 @@
+compress_none_8M.orc cudf false

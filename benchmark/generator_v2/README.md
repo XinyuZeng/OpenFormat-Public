@@ -1,4 +1,4 @@
-# New Generator
+# Workload and Data Generator
 ## Quick Start
 Use `gen_workloads.py` to generate dataset:
 ```sh
@@ -10,8 +10,10 @@ In `<workload>` option, you can use one of the `core, multiple, classic, geo, lo
 
 The generated dataset file will be placed in folder `./{target_basefile_name}/gen_data`, named `{target_basefile_name}.csv`
 
+Try ```python3 gen_workloads.py --help``` to get detailed information on optional fields. We recommend using `--multi_process` to speed up the generation process if you generate more data than 1Mi rows and 20 columns. This also requires a machine with enough DRAM.
+
 ## Detailed Executing Logic
-In folder `./workload_config`, we have consolidated stats-config for each workload. This configs are extracted from realdata features in `../../feature/outputs/stats.csv`, you can re-extract the workload-config by running `python core_config_gen.py` and `python multi_workloads_config_gen.py`.
+In folder `./workload_config`, we have consolidated stats-config for each workload. This configs are extracted from realdata features in `../../feature/outputs/feature_olap.csv`, you can re-extract the workload-config by running `python core_config_gen.py` and `python multi_workloads_config_gen.py`.
 
 File `generator.py` provides a Generator class, which can gen single-col data according to a single-col config file. In `gen_workloads.py`, we read and process workload-config, **create single-col config files one by one** (which will be placed in `{target_basefile_name}/configs`), and call Generator class functions to get the final data column by column.
 

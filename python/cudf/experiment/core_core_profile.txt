@@ -1,0 +1,4 @@
+core_core_1M.orc default false
+core_core_2M.orc default false
+core_core_4M.orc default false
+core_core_8M.orc default false

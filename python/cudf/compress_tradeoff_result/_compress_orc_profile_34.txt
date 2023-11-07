@@ -1,0 +1,1 @@
+compress_zstd_512K.orc cudf false

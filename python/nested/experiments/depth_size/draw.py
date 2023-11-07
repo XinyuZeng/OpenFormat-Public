@@ -2,6 +2,9 @@ import sys
 from matplotlib import pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
+import numpy as np
 matplotlib.rcParams.update({'font.size': 14})
 
 sys.path.append('.')
@@ -11,7 +14,7 @@ from python.plot.stylelib import *
 from python.plot.process_helper import *
 
 depths = [2,4, 8, 17, 32, 47, 62]
-fig_size = (5, 2.6)
+fig_size = (4, 1.8)
 
 def main():
 	_, line_colors = select_color_idx(5)
@@ -111,9 +114,9 @@ def main():
 	ax.set_axisbelow(True)
 	ax.grid(axis='y', linewidth=0.35)
 	ax.set_ylabel('File Size (MB)')
-	legend = ax.legend(frameon=False, ncol=2, bbox_to_anchor=(0.5, 1.3), loc='upper center')
+	legend = ax.legend(frameon=False, ncol=1, bbox_to_anchor=(0.4, 1.02), loc='upper center')
 	export_legend(legend, "python/figures/nested_legend.pdf")
-	legend.remove()
+	# legend.remove()
 	fig.savefig(f'python/figures/nested_size.pdf', bbox_inches = 'tight')
  
 	fig, ax = plt.subplots(1, 1, figsize=fig_size)
@@ -157,7 +160,7 @@ def main():
 	fig, ax = plt.subplots(1, 1, figsize=fig_size)
 	ax.plot(
 		depths,
-		pq_time_raw,
+		np.array(pq_time_raw) / 1000,
 		color=line_colors[C_PQ],
 		marker='v',
 		label='Parquet',
@@ -166,7 +169,7 @@ def main():
 	)
 	ax.plot(
 		depths,
-		orc_time_raw,
+		np.array(orc_time_raw) / 1000,
 		color=line_colors[C_ORC],
 		marker='o',
 		label='ORC',
@@ -183,7 +186,7 @@ def main():
 	ax.set_xticks(depths)
 	# Set the x-axis tick labels to the original data values
 	ax.set_xticklabels(depths)
-	ax.set_ylabel('Time (ms)')
+	# ax.set_ylabel('Time (ms)')
 	ax.set_axisbelow(True)
 	ax.grid(axis='y', linewidth=0.35)
 	# ax[1].legend()

@@ -1,0 +1,14 @@
+core_float_4K default false
+core_float_8K default false
+core_float_12K default false
+core_float_16K default false
+core_float_32K default false
+core_float_64K default false
+core_float_128K default false
+core_float_256K default false
+core_float_512K default false
+core_float_1M default false
+core_float_2M default false
+core_float_4M default false
+core_float_8M default false
+core_float_16M default false

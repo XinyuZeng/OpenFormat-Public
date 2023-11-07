@@ -1,0 +1,1 @@
+core_core_8M.orc default false

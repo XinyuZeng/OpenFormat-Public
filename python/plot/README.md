@@ -1,1 +1,0 @@
-scripts need to be run within this directory.

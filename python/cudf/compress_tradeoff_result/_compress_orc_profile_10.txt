@@ -1,0 +1,1 @@
+compress_snappy_2M.orc cudf false

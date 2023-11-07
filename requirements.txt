@@ -1,0 +1,9 @@
+matplotlib
+numpy
+pandas
+pyarrow==9.0.0
+zarr==2.13.3
+h5py==3.7.0
+xarray==2023.6.0
+autofaiss==2.15.8
+faiss-cpu==1.7.4 # via conda channel pytorch

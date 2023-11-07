@@ -1,0 +1,3 @@
+warm_up cudf true
+warm_up pandas true
+warm_up pyarrow true

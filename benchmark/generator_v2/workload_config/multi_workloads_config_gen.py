@@ -7,7 +7,8 @@ import pandas as pd
 import numpy as np
 import os
 
-stats_file_name = '../../feature/outputs/stats.csv'
+stats_file_name = '../../feature/outputs/feature_vector.csv'
+# stats_file_name = '../../feature/outputs/stats.csv'
 
 
 class NpEncoder(json.JSONEncoder):
@@ -187,6 +188,8 @@ def feature_analysis(_df):
     dtype_list = ['float64', 'object', 'int64']
     dtype_map_config_dict = {}
     for dtype in dtype_list:
+        if len(_df[(_df['dtype'] == dtype)]) == 0:
+            continue
         # count the stats for each column
         sort_scores = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.01]  # sort<0.1 is sort0; 0.1<=sort<0.2 is sort1
         car_ratios = [0, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.01]
@@ -290,14 +293,19 @@ def feature_analysis(_df):
 if __name__ == '__main__':
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     df = pd.read_csv(stats_file_name, sep=',')
-    workload_list = ['classic', 'geo', 'log', 'ml', 'bi']
+    workload_list = ['classic', 'geo', 'log', 'ml', 'bi', 'vector']
     workload_dir_dict = {
         'classic': ['imdb', 'yelp', 'UKPP', 'menu'],
         'geo': ['cells', 'geo', 'flight'],
         'log': ['edgar', 'mgbench'],
         'ml': ['ml'],
-        'bi': ['cwi']
+        'bi': ['cwi'],
+        'vector': ['vector']
     }
+    # workload_list = ['vector']
+    # workload_dir_dict = {
+    #     'vector': ['vector']
+    # }
     for workload in workload_list:
         os.makedirs('./{}_config'.format(workload), exist_ok=True)
         dir = workload_dir_dict[workload]
